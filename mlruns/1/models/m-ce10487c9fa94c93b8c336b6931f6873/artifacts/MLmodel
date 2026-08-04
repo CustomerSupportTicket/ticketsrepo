@@ -1,0 +1,22 @@
+artifact_path: file:C:/Users/jagdi/OneDrive/Documents/Desktop/Pml project/ticketsrepo/mlruns/1/models/m-ce10487c9fa94c93b8c336b6931f6873/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.14.6
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.3.0
+mlflow_version: 3.14.0
+model_id: m-ce10487c9fa94c93b8c336b6931f6873
+model_size_bytes: 3960228
+model_uuid: m-ce10487c9fa94c93b8c336b6931f6873
+prompts: null
+run_id: 1b88170c78bc4dfc8d35b40d1932027e
+utc_time_created: '2026-08-04 04:19:33.241217'

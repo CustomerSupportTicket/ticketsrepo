@@ -3,3 +3,9 @@ sqlalchemy
 psycopg2-binary
 mlflow
 python-dotenv
+xgboost
+mlflow
+scikit-learn
+pandas
+matplotlib
+joblib
