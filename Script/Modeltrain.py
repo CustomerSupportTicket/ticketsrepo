@@ -1,1 +1,0 @@
-print(df["issue_description"].head(10))
