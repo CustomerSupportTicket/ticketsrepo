@@ -4,9 +4,17 @@ psycopg2-binary
 mlflow
 python-dotenv
 xgboost
-mlflow
 scikit-learn
-pandas
 matplotlib
 joblib
+langchain
+langchain-community
+langchain-huggingface
+faiss-cpu
+sentence-transformers
+langchain-google-genai
+langchain
+google-generativeai
+langchain-chroma chromadb
+pip install torchvision
 pyspellchecker
