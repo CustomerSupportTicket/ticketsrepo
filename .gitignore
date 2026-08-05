@@ -5,3 +5,15 @@ __pycache__/
 .vscode/
 .streamlit/secrets.toml 
 logs/
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# ChromaDB
+rag/chroma_db/
+
+# Optional: Ignore local datasets
+Dataset/CleanData/*.csv
