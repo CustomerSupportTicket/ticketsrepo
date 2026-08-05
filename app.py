@@ -1,10 +1,54 @@
 import streamlit as st
 import joblib
 import os
+import re
+from spellchecker import SpellChecker
 from scipy.sparse import hstack, csr_matrix
 import numpy as np
 
 from rag.rag_pipeline import get_rag_response
+
+# ============================================================
+# GARBAGE DETECTION SETUP
+# ============================================================
+# Earlier version checked whether words matched the model's own trained
+# TF-IDF vocabulary — but that vocabulary is narrow (only ~5000 words
+# from this specific dataset), so plenty of legitimate words ("order",
+# "delayed", "delivery") were never seen during training and got
+# wrongly flagged as garbage. This version instead checks against
+# GENERAL English vocabulary (catches true gibberish reliably) plus a
+# broad support-topic keyword list (catches real-English-but-irrelevant
+# chat like "hello there" or "you dumb").
+_spell = SpellChecker()
+
+_SUPPORT_KEYWORDS = {
+    "account", "login", "password", "signin", "signup", "order", "payment", "pay", "paid",
+    "refund", "charge", "charged", "subscription", "subscribe", "cancel", "cancelled",
+    "delivery", "deliver", "delivered", "shipping", "ship", "shipped", "bug", "crash",
+    "crashed", "error", "issue", "problem", "broken", "break", "working", "slow", "lag",
+    "lagging", "performance", "sync", "syncing", "data", "security", "secure", "access",
+    "service", "support", "app", "application", "system", "website", "site", "feature",
+    "request", "complaint", "help", "technical", "network", "connection", "connect",
+    "update", "install", "download", "upload", "file", "report", "dashboard", "api",
+    "server", "database", "email", "notification", "alert", "ticket", "customer",
+    "product", "item", "purchase", "buy", "bought", "transaction", "invoice", "billing",
+    "bill", "fail", "failed", "failure", "unable", "cannot", "cant", "missing", "lost",
+    "wrong", "incorrect", "damage", "damaged", "defective", "stuck", "freeze", "frozen",
+    "suspended", "suspend", "locked", "lock", "blocked", "block", "deactivated", "expired",
+}
+
+
+def is_garbage_ticket(text: str) -> bool:
+    words = re.findall(r"[a-zA-Z']+", text.lower())
+    if not words:
+        return True
+    unknown = _spell.unknown(words)
+    known_ratio = 1 - (len(unknown) / len(words))
+    if known_ratio < 0.5:
+        return True  # mostly not real English words -> gibberish
+    if not any(w in _SUPPORT_KEYWORDS for w in words):
+        return True  # real English, but nothing support-related -> irrelevant chat
+    return False
 
 # ============================================================
 # PAGE CONFIG
@@ -194,7 +238,7 @@ models, missing_files = load_prediction_models()
 # ============================================================
 # TABS
 # ============================================================
-tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "🤖 Agentic AI (RAG)", "📊 Dashboard"])
+tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "🤖 Response", "📊 Dashboard"])
 
 # ------------------------------------------------------------
 # TAB 1 — PREDICTION
@@ -224,16 +268,33 @@ with tab1:
             pri_model = models["priority_model"]
             encoders = models["label_encoders"]
 
-            X_input = tfidf.transform([ticket_text])
+            if is_garbage_ticket(ticket_text):
+                st.markdown(
+                    """
+                    <div style="background-color:#FBEAEA; border-left:6px solid #D64545;
+                                border-radius:10px; padding:1.1rem 1.4rem; margin-top:1rem;">
+                        <span style="font-size:1.2rem; font-weight:800; color:#B23A3A;">
+                            🚫 Garbage Ticket Entered
+                        </span>
+                        <div style="color:#7A4444; margin-top:0.3rem; font-size:0.95rem;">
+                            This doesn't look like a real customer complaint — please enter
+                            an actual support ticket description.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                X_input = tfidf.transform([ticket_text])
+                cat_pred = cat_model.predict(X_input)[0]
+                pri_pred = pri_model.predict(X_input)[0]
 
-            cat_pred = cat_model.predict(X_input)[0]
-            pri_pred = pri_model.predict(X_input)[0]
+                cat_label = encoders["category"].inverse_transform([cat_pred])[0]
+                pri_label = encoders["priority"].inverse_transform([pri_pred])[0]
 
-            cat_label = encoders["category"].inverse_transform([cat_pred])[0]
-            pri_label = encoders["priority"].inverse_transform([pri_pred])[0]
+                st.success("Prediction complete ✅")
 
-            st.success("Prediction complete ✅")
-            render_prediction_results(cat_label, pri_label)
+                render_prediction_results(cat_label, pri_label)
 
 # ------------------------------------------------------------
 # TAB 2 — AGENTIC AI / RAG
