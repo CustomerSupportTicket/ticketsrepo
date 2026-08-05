@@ -3,5 +3,9 @@ sqlalchemy
 psycopg2-binary
 mlflow
 python-dotenv
-lightgbm==4.7.0
-xgboost==3.3.0
+xgboost
+mlflow
+scikit-learn
+pandas
+matplotlib
+joblib
