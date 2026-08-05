@@ -17,3 +17,4 @@ langchain
 google-generativeai
 langchain-chroma chromadb
 pip install torchvision
+pyspellchecker
