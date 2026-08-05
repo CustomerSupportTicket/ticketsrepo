@@ -6,13 +6,173 @@ import numpy as np
 
 from rag.rag_pipeline import get_rag_response
 
+# ============================================================
+# PAGE CONFIG
+# ============================================================
 st.set_page_config(page_title="Ticket Triage & Resolution", layout="wide")
-st.title("🎫 Customer Support Ticket Triage & Resolution System") 
 
-
-#loading ML model
 MODEL_DIR = "models"
 
+# ============================================================
+# CUSTOM STYLING
+# ============================================================
+st.markdown("""
+<style>
+/* ---- Overall page background ---- */
+.stApp {
+    background-color: #F7F8FA;
+}
+
+/* ---- Centered custom title (replaces st.title) ---- */
+.app-title {
+    text-align: center;
+    color: #1E3A5F;
+    font-size: 2.4rem;
+    font-weight: 800;
+    padding-top: 0.5rem;
+    padding-bottom: 0.2rem;
+    letter-spacing: -0.5px;
+}
+.app-subtitle {
+    text-align: center;
+    color: #5C6B7A;
+    font-size: 1.05rem;
+    padding-bottom: 1.5rem;
+}
+
+/* ---- Center the tab list ---- */
+div[role="tablist"] {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: #EAEEF2;
+    border-radius: 14px;
+    padding: 8px;
+    margin-bottom: 1.5rem;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ---- Bigger, styled tab buttons ---- */
+div[data-testid="stTab"] {
+    font-size: 1.15rem;
+    font-weight: 600;
+    padding: 14px 32px;
+    border-radius: 10px;
+    color: #445266;
+    background-color: transparent;
+}
+div[data-testid="stTab"] p {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+/* ---- Active tab highlight ---- */
+div[data-testid="stTab"][aria-selected="true"] {
+    background-color: #1E3A5F;
+}
+div[data-testid="stTab"][aria-selected="true"] p {
+    color: #FFFFFF !important;
+}
+
+/* ---- Remove default underline/selection indicator ---- */
+.react-aria-SelectionIndicator {
+    display: none;
+}
+
+/* ---- Accent color for buttons ---- */
+.stButton>button {
+    background-color: #D9822B;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    padding: 0.5rem 1.5rem;
+}
+.stButton>button:hover {
+    background-color: #B96A1F;
+    color: white;
+}
+
+/* ---- Prediction result cards ---- */
+.result-row {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+.result-card {
+    flex: 1;
+    background-color: #FFFFFF;
+    border-radius: 14px;
+    padding: 1.4rem 1.6rem;
+    box-shadow: 0 2px 10px rgba(30, 58, 95, 0.08);
+    border-left: 6px solid #1E3A5F;
+}
+.result-card .result-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8A96A3;
+    margin-bottom: 0.4rem;
+}
+.result-card .result-value {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #1E3A5F;
+}
+.priority-badge {
+    display: inline-block;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# HELPERS FOR RESULT DISPLAY
+# ============================================================
+PRIORITY_COLORS = {
+    "Urgent": "#D64545",   # red
+    "High":   "#E08A2C",   # orange
+    "Medium": "#D9B23C",   # yellow/gold
+    "Low":    "#3F9142",   # green
+}
+
+def render_prediction_results(category_label, priority_label):
+    priority_color = PRIORITY_COLORS.get(priority_label, "#1E3A5F")
+    st.markdown(
+        f"""
+        <div class="result-row">
+            <div class="result-card">
+                <div class="result-label">Predicted Category</div>
+                <div class="result-value">🏷️ {category_label}</div>
+            </div>
+            <div class="result-card" style="border-left-color:{priority_color};">
+                <div class="result-label">Predicted Priority</div>
+                <div class="priority-badge" style="background-color:{priority_color};">
+                    {priority_label}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# ============================================================
+# TITLE (centered, custom HTML instead of st.title)
+# ============================================================
+st.markdown('<div class="app-title">🎫 Customer Support Ticket Triage & Resolution System</div>', unsafe_allow_html=True)
+st.markdown('<div class="app-subtitle">Predict, resolve, and track support tickets in one place</div>', unsafe_allow_html=True)
+
+# ============================================================
+# LOAD ML MODELS (cached so they load only once, not every rerun)
+# ============================================================
 @st.cache_resource
 def load_prediction_models():
     paths = {
@@ -28,13 +188,17 @@ def load_prediction_models():
     models = {name: joblib.load(p) for name, p in paths.items()}
     return models, []
 
+
 models, missing_files = load_prediction_models()
 
-#creating 3 tabs 
-tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "🤖 Agentic AI (RAG)", "📊 Dashboard"]) 
+# ============================================================
+# TABS
+# ============================================================
+tab1, tab2, tab3 = st.tabs(["🔮 Prediction", "🤖 Agentic AI (RAG)", "📊 Dashboard"])
 
-
-#Tab1-----Prediction
+# ------------------------------------------------------------
+# TAB 1 — PREDICTION
+# ------------------------------------------------------------
 with tab1:
     st.subheader("Predict Ticket Category & Priority")
     st.write("Enter a customer complaint below to predict its category and priority.")
@@ -68,11 +232,12 @@ with tab1:
             cat_label = encoders["category"].inverse_transform([cat_pred])[0]
             pri_label = encoders["priority"].inverse_transform([pri_pred])[0]
 
-            col1, col2 = st.columns(2)
-            col1.metric("Predicted Category", cat_label)
-            col2.metric("Predicted Priority", pri_label) 
+            st.success("Prediction complete ✅")
+            render_prediction_results(cat_label, pri_label)
 
-
+# ------------------------------------------------------------
+# TAB 2 — AGENTIC AI / RAG
+# ------------------------------------------------------------
 with tab2:
     st.subheader("Get a Suggested Resolution (RAG)")
     st.write("Enter a customer complaint and the system will retrieve similar past "
@@ -105,9 +270,11 @@ with tab2:
                         "implement `get_rag_response()` in `rag/rag_pipeline.py`."
                     )
                 except Exception as e:
-                    st.error(f"RAG pipeline error: {e}") 
+                    st.error(f"RAG pipeline error: {e}")
 
-
+# ------------------------------------------------------------
+# TAB 3 — TABLEAU DASHBOARD
+# ------------------------------------------------------------
 with tab3:
     st.subheader("Ticket Analytics Dashboard")
 
@@ -120,7 +287,8 @@ with tab3:
         )
     else:
         st.components.v1.html(
-            f"""<div class='tableauPlaceholder' style='width:100%; height:800px;'>
+            f"""
+            <div class='tableauPlaceholder' style='width:100%; height:800px;'>
                 <object class='tableauViz' style='width:100%; height:100%;'>
                     <param name='embed_code_version' value='3' />
                     <param name='site_root' value='' />
@@ -128,11 +296,7 @@ with tab3:
                     <param name='tabs' value='no' />
                     <param name='toolbar' value='yes' />
                 </object>
-            </div>""",
+            </div>
+            """,
             height=820,
         )
-
-
-
-
- 

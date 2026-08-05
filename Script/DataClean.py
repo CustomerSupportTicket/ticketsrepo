@@ -65,7 +65,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_INPUT_PATH = os.path.join(BASE_DIR, "Dataset", "RawData", "customer_support_tickets_200k.csv")
 DEFAULT_OUTPUT_PATH = os.path.join(BASE_DIR, "Dataset", "CleanData", "customer_support_tickets_cleaned.csv")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
-DEFAULT_CHUNKSIZE = 20_000
+DEFAULT_CHUNKSIZE = 20_000 
 
 PRIMARY_KEY = "ticket_id"
 DATE_COLUMNS = ["ticket_created_date", "ticket_resolved_date"]

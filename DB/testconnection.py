@@ -14,5 +14,6 @@ try:
 except Exception as e:
     print("=" * 60)
     print("❌ Connection Failed")
-    print("=" * 60)
-    print(e)
+    print("=" * 60)   
+    print(e) 
+    
