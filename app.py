@@ -337,27 +337,10 @@ with tab2:
 # TAB 3 — TABLEAU DASHBOARD
 # ------------------------------------------------------------
 with tab3:
-    st.subheader("Ticket Analytics Dashboard")
+    st.subheader("📊 Ticket Analytics Dashboard")
 
-    TABLEAU_EMBED_URL = "https://public.tableau.com/views/YOUR_DASHBOARD_NAME/YOUR_SHEET_NAME"
-
-    if "YOUR_DASHBOARD_NAME" in TABLEAU_EMBED_URL:
-        st.info(
-            "Tableau dashboard not linked yet. Once your teammate publishes it to "
-            "Tableau Public, replace `TABLEAU_EMBED_URL` in app.py with the real link."
-        )
-    else:
-        st.components.v1.html(
-            f"""
-            <div class='tableauPlaceholder' style='width:100%; height:800px;'>
-                <object class='tableauViz' style='width:100%; height:100%;'>
-                    <param name='embed_code_version' value='3' />
-                    <param name='site_root' value='' />
-                    <param name='name' value='{TABLEAU_EMBED_URL.split("/")[-2]}/{TABLEAU_EMBED_URL.split("/")[-1]}' />
-                    <param name='tabs' value='no' />
-                    <param name='toolbar' value='yes' />
-                </object>
-            </div>
-            """,
-            height=820,
-        )
+    st.components.v1.iframe(
+        "https://public.tableau.com/views/PMLproject/Dashboard1?:showVizHome=no",
+        height=900,
+        scrolling=True,
+    )
