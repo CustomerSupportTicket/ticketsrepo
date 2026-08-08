@@ -1,70 +1,51 @@
 from sqlalchemy import text
 from config import engine
 
-TABLE_NAME = "customer_support_tickets"   # Change if your table name is different
-
 try:
     with engine.connect() as conn:
 
-        # PostgreSQL Version
-        version = conn.execute(text("SELECT version();")).scalar()
+        # -----------------------------------------
+        # Count total tables
+        # -----------------------------------------
+        table_count = conn.execute(text("""
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_schema = 'public';
+        """)).scalar()
 
-        print("=" * 70)
-        print("✅ Connected Successfully to Amazon RDS PostgreSQL")
-        print("=" * 70)
-        print(version)
+        print("=" * 60)
+        print("Connected Successfully to Amazon RDS PostgreSQL")
+        print("=" * 60)
 
-        # ----------------------------------------------------
-        # List all tables
-        # ----------------------------------------------------
-        print("\nTables in Database")
-        print("-" * 70)
+        print(f"\nTotal Tables: {table_count}")
 
+        # -----------------------------------------
+        # Get table names
+        # -----------------------------------------
         tables = conn.execute(text("""
             SELECT table_name
             FROM information_schema.tables
-            WHERE table_schema='public'
+            WHERE table_schema = 'public'
             ORDER BY table_name;
-        """))
+        """)).fetchall()
+
+        # -----------------------------------------
+        # Count records in each table
+        # -----------------------------------------
+        print("\nRecords in Each Table")
+        print("-" * 60)
 
         for table in tables:
-            print(table[0])
+            table_name = table[0]
 
-        # ----------------------------------------------------
-        # Column Names & Data Types
-        # ----------------------------------------------------
-        print("\nColumn Names & Data Types")
-        print("-" * 70)
+            count = conn.execute(
+                text(f'SELECT COUNT(*) FROM "{table_name}";')
+            ).scalar()
 
-        columns = conn.execute(text(f"""
-            SELECT
-                column_name,
-                data_type
-            FROM information_schema.columns
-            WHERE table_name='{TABLE_NAME}'
-            ORDER BY ordinal_position;
-        """))
-
-        for col in columns:
-            print(f"{col[0]:35} {col[1]}")
-
-        # ----------------------------------------------------
-        # First 5 Rows
-        # ----------------------------------------------------
-        print("\nFirst 5 Rows")
-        print("-" * 70)
-
-        rows = conn.execute(text(f"""
-            SELECT *
-            FROM {TABLE_NAME}
-            LIMIT 5;
-        """))
-
-        for row in rows:
-            print(row)
+            print(f"{table_name:35} {count} records")
 
 except Exception as e:
-    print("=" * 70)
-    print("❌ Connection Failed")
-    print("=" * 70)
+    print("=" * 60)
+    print("Connection Failed")
+    print("=" * 60)
     print(e)

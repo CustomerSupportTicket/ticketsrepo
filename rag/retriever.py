@@ -12,6 +12,7 @@ vector_db = Chroma(
     persist_directory=CHROMA_PATH,
     embedding_function=embedding_model
 )
+print("Vector Count:", vector_db._collection.count())
 
 retriever = vector_db.as_retriever(
     search_type="similarity",
